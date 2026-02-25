@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Notes</title>
+</head>
+<body>
+
+<h1>My Notes</h1>
+
+<input id="title" placeholder="Title">
+<input id="content" placeholder="Content">
+<button onclick="addNote()">Add</button>
+
+<ul id="notes"></ul>
+
+<button onclick="logout()">Logout</button>
+
+<script>
+const token = localStorage.getItem("token");
+
+if (!token) {
+    window.location.href = "index.html";
+}
+
+async function fetchNotes() {
+    const res = await fetch("/api/notes", {
+        headers: {
+            "Authorization": token
+        }
+    });
+    const notes = await res.json();
+
+    const list = document.getElementById("notes");
+    list.innerHTML = "";
+
+    notes.forEach(note => {
+        list.innerHTML += `
+            <li>
+                ${note.title} - ${note.content}
+                <button onclick="deleteNote('${note._id}')">Delete</button>
+            </li>
+        `;
+    });
+}
+
+async function addNote() {
+    const title = document.getElementById("title").value;
+    const content = document.getElementById("content").value;
+
+    await fetch("/api/notes", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token
+        },
+        body: JSON.stringify({ title, content })
+    });
+
+    fetchNotes();
+}
+
+async function deleteNote(id) {
+    await fetch("/api/notes/" + id, {
+        method: "DELETE",
+        headers: {
+            "Authorization": token
+        }
+    });
+
+    fetchNotes();
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "index.html";
+}
+
+fetchNotes();
+</script>
+
+</body>
+</html>
